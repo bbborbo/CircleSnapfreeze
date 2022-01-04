@@ -65,15 +65,15 @@ namespace CircleSnapfreeze
         {
             CustomConfigFile = new ConfigFile(Paths.ConfigPath + "\\CircleSnap.cfg", true);
 
-            CircleMaxRadius = CustomConfigFile.Bind<float>("Circle Snap", "Snapfreeze Maximum Radius", 12,
+            CircleMaxRadius = CustomConfigFile.Bind<float>("Circle Snap", "Snapfreeze Maximum Radius", 6,
                 "This determines the outer radius of Circle Snapfreeze's Snapfreeze Circle. All ice pillars spawned will be WITHIN this radius. " +
                 "12 behaves the same as vanilla.");
 
-            CircleMaxDeployTime = CustomConfigFile.Bind<float>("Circle Snap", "Snapfreeze Deploy Time", 0.2f,
+            CircleMaxDeployTime = CustomConfigFile.Bind<float>("Circle Snap", "Snapfreeze Deploy Time", 0.15f,
                 "This determines the time it takes to fully deploy Snapfreeze. " +
                 "0.3 behaves the same as vanilla.");
 
-            TotalRays = CustomConfigFile.Bind<int>("Circle Snap", "Total Rays", 12,
+            TotalRays = CustomConfigFile.Bind<int>("Circle Snap", "Total Rays", 9,
                 "This determines how many 'rays' circle snapfreeze has. " +
                 "2 rays behaves the same as vanilla. Minimum of 2 rays.");
             TotalRays.Value = Mathf.Max(TotalRays.Value, 2); //To set a "minimum" value, we have to get the higher number.
@@ -83,11 +83,11 @@ namespace CircleSnapfreeze
                 "6 pillars behaves the same as vanilla. Minimum of 1 pillar per ray.");
             PillarsPerRay.Value = Mathf.Max(PillarsPerRay.Value, 1);
 
-            RayRotationOffset = CustomConfigFile.Bind<int>("Clapfreeze", "Ray Rotation Offset", 0,
+            RayRotationOffset = CustomConfigFile.Bind<int>("Clapfreeze", "Ray Rotation Offset", -90,
                 "This determines the rotation offset for Snapfreeze 'rays'. " +
                 "This wont have a significant effect on the performance of Snapfreeze unless youre using very few rays. " +
                 "Every 360 degrees loops back around to 0, you know the drill. " +
-                "90 or 270 behaves the same as ArtificerExtended's long lost Clapfreeze skill.");
+                "-90 behaves the same as ArtificerExtended's long lost Clapfreeze skill.");
 
             UseClapfreezeAssets = CustomConfigFile.Bind<bool>("Clapfreeze", "Use Clapfreeze Assets", false,
                 "Enable cosmetic changes to make the Snapfreeze skill use the Clapfreeze assets from ArtificerExtended.");
@@ -103,7 +103,9 @@ namespace CircleSnapfreeze
             // I would've liked to just config everything we wanted directly, but that comes at the cost of user intuition. Not the end of the world.
             float lifetime = CircleMaxDeployTime.Value;
             float velocity = CircleMaxRadius.Value / lifetime; //essentially meters per second
-            float dropInterval = lifetime / PillarsPerRay.Value;
+            float dropInterval = lifetime / (PillarsPerRay.Value - 0.5f) - 0.01f; 
+            // The walkers are designed to halve the drop interval before the first pillar so the gap between the first pillars on different rays is the same as other pillars.
+            // We need to accomodate for this with the drop interval, otherwise circle snap wont behave as expected.
 
             // We need a few key components from the projectile. I'm looking at the prefab data, so I know everything the projectile has, and what I need to change.
             // First is the ProjectileCharacterController. This is a component that is not used very often, instead most projectiles use a simple ProjectileController.
@@ -111,7 +113,7 @@ namespace CircleSnapfreeze
             ProjectileCharacterController projectileController = CircleSnapWalkerPrefab.GetComponent<ProjectileCharacterController>();
             if (projectileController != null) // Always do null checks when getting components, even if it feels silly.
             {
-                projectileController.lifetime = lifetime + 0.01f;
+                projectileController.lifetime = lifetime;
                 projectileController.velocity = velocity;
             }
             else
@@ -149,8 +151,12 @@ namespace CircleSnapfreeze
                 ContentPacks.entityStates.Add(typeof(States.PrepCircleWall));
 
                 // Lastly, let's change the description of Snapfreeze to match our changes.
+                // I am creating a unique description token to override snapfreeze's description, instead of using LanguageAPI to adjust the token directly.
+                // This way, if anyone else changed the snapfreeze token, this takes precedent.
+                string customSnapfreezeToken = "MAGE_CIRCLESNAP_ICE_DESCRIPTION";
+                snapfreeze.skillDescriptionToken = customSnapfreezeToken;
                 // You can put the $ before a string so that you can easily format variables into it just by inserting a curly bracket.
-                LanguageAPI.Add("MAGE_UTILITY_ICE_DESCRIPTION", $"<style=cIsUtility>Freezing</style>. Create a barrier that hurts enemies for " +
+                LanguageAPI.Add(customSnapfreezeToken, $"<style=cIsUtility>Freezing</style>. Create a barrier that hurts enemies for " +
                     $"up to <style=cIsDamage>{PillarsPerRay.Value * TotalRays.Value}x100% damage</style>.");
 
                 if (UseClapfreezeAssets.Value == true)

@@ -55,7 +55,7 @@ namespace CircleSnapfreeze.States
 		{
 			// All that need be changed here is to adjust the size of the area indicator to match the size of the circle.
 			// I had to multiply the size by a fraction because it didn't fit quite right.
-			this.areaIndicatorInstance.transform.localScale = Vector3.one * CircleSnapPlugin.CircleMaxRadius.Value * 0.6f;
+			this.areaIndicatorInstance.transform.localScale = Vector3.one * CircleSnapPlugin.CircleMaxRadius.Value * 1.0f;
 
 			this.goodPlacement = false;
 			this.areaIndicatorInstance.SetActive(true);
@@ -105,11 +105,11 @@ namespace CircleSnapfreeze.States
 					{
 						EffectManager.SimpleMuzzleFlash(PrepWall.muzzleflashEffect, base.gameObject, "MuzzleLeft", true);
 						EffectManager.SimpleMuzzleFlash(PrepWall.muzzleflashEffect, base.gameObject, "MuzzleRight", true);
+						bool crit = Util.CheckRoll(this.critStat, base.characterBody.master);
 						Vector3 forward = this.areaIndicatorInstance.transform.forward;
 						forward.y = 0f;
 						forward.Normalize();
 						Vector3 vector = Vector3.Cross(Vector3.up, forward);
-						bool crit = Util.CheckRoll(this.critStat, base.characterBody.master);
 
 						// The commented out code here is what the original Snapfreeze used to fire it's walkers. We don't need this, obviously.
 						/*
@@ -126,17 +126,12 @@ namespace CircleSnapfreeze.States
 						float angleOffset = CircleSnapPlugin.RayRotationOffset.Value;
 						float angleDelta = 360f / totalRays;
 
-						// I dont know what all the math here does, I just copied it from the worms-firing-meatballs logic. It works.
-						Vector3 surfaceNormal = this.areaIndicatorInstance.transform.up;
-						Vector3 normalized = Vector3.ProjectOnPlane(forward, surfaceNormal).normalized;
-						Vector3 point = Vector3.RotateTowards(surfaceNormal, vector, 90 * 0.0174532924f, float.PositiveInfinity);
-
 						// Here I set up a loop to fire as many rays as determined by config.
 						// This way, the user can choose how many rays they want,
 						// and we also don't have to go insane copy + pasting the same fire projectile line a dozen times for slightly different angles.
 						for (int i = 0; i < totalRays; i++)
 						{
-							Vector3 forward2 = Quaternion.AngleAxis(angleDelta * (float)i + angleOffset, surfaceNormal) * point;
+							Vector3 forward2 = Quaternion.AngleAxis((angleDelta * i) + angleOffset, Vector3.up) * vector;
 
 							ProjectileManager.instance.FireProjectile(PrepCircleWall.projectilePrefab,
 							this.areaIndicatorInstance.transform.position + Vector3.up, Util.QuaternionSafeLookRotation(forward2),
