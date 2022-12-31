@@ -40,11 +40,22 @@ namespace CircleSnapfreeze
         #region config
         // config sux
         internal static ConfigFile CustomConfigFile { get; set; }
+
+        // stats
         public static ConfigEntry<float> CircleMaxRadius { get; set; }
         public static ConfigEntry<float> CircleMaxDeployTime { get; set; }
         public static ConfigEntry<int> TotalRays { get; set; }
         public static ConfigEntry<int> PillarsPerRay { get; set; }
         public static ConfigEntry<int> RayRotationOffset { get; set; }
+
+        // skilldef
+        public static ConfigEntry<bool> IsCombatSkill { get; set; }
+        public static ConfigEntry<bool> CanceledFromSprinting { get; set; }
+        public static ConfigEntry<int> BaseMaxStock { get; set; }
+        public static ConfigEntry<int> RechargeStock { get; set; }
+        public static ConfigEntry<float> BaseRechargeInterval { get; set; }
+
+        //clapfreeze lol
         public static ConfigEntry<bool> UseClapfreezeAssets { get; set; }
         #endregion
 
@@ -80,6 +91,7 @@ namespace CircleSnapfreeze
         [MethodImpl(MethodImplOptions.NoInlining | MethodImplOptions.NoOptimization)]
         private void DoAutosprintCompat()
         {
+            //This just stops autosprint from sprint cancelling the circle snapfreeze state
             SendMessage("RT_SprintDisableMessage", "CircleSnapfreeze.States.PrepCircleWall");
         }
 
@@ -87,20 +99,20 @@ namespace CircleSnapfreeze
         {
             CustomConfigFile = new ConfigFile(Paths.ConfigPath + "\\CircleSnap.cfg", true);
 
-            CircleMaxRadius = CustomConfigFile.Bind<float>("Circle Snap", "Snapfreeze Maximum Radius", 6,
+            CircleMaxRadius = CustomConfigFile.Bind<float>("Circle Snap - State", "Snapfreeze Maximum Radius", 6,
                 "This determines the outer radius of Circle Snapfreeze's Snapfreeze Circle. All ice pillars spawned will be WITHIN this radius. " +
                 "12 behaves the same as vanilla.");
 
-            CircleMaxDeployTime = CustomConfigFile.Bind<float>("Circle Snap", "Snapfreeze Deploy Time", 0.15f,
+            CircleMaxDeployTime = CustomConfigFile.Bind<float>("Circle Snap - State", "Snapfreeze Deploy Time", 0.15f,
                 "This determines the time it takes to fully deploy Snapfreeze. " +
                 "0.3 behaves the same as vanilla.");
 
-            TotalRays = CustomConfigFile.Bind<int>("Circle Snap", "Total Rays", 9,
+            TotalRays = CustomConfigFile.Bind<int>("Circle Snap - State", "Total Rays", 9,
                 "This determines how many 'rays' circle snapfreeze has. " +
                 "2 rays behaves the same as vanilla. Minimum of 2 rays.");
             TotalRays.Value = Mathf.Max(TotalRays.Value, 2); //To set a "minimum" value, we have to get the higher number.
 
-            PillarsPerRay = CustomConfigFile.Bind<int>("Circle Snap", "Pillars Per Ray", 1,
+            PillarsPerRay = CustomConfigFile.Bind<int>("Circle Snap - State", "Pillars Per Ray", 1,
                 "This determines how many pillars are dropped in each of circle snapfreeze's 'rays'. " +
                 "6 pillars behaves the same as vanilla. Minimum of 1 pillar per ray.");
             PillarsPerRay.Value = Mathf.Max(PillarsPerRay.Value, 1);
@@ -110,6 +122,21 @@ namespace CircleSnapfreeze
                 "This wont have a significant effect on the performance of Snapfreeze unless youre using very few rays. " +
                 "Every 360 degrees loops back around to 0, you know the drill. " +
                 "-90 fires the first ray towards you - behaving the same as ArtificerExtended's long lost Clapfreeze skill.");
+
+            IsCombatSkill = CustomConfigFile.Bind<bool>("Circle Snap - Skill", "Is Circle Snapfreeze a Combat Skill", true,
+                "Set whether or not casting Snapfreeze causes the player to enter combat, cancelling effects such as Red Whip. Vanilla value: True.");
+
+            CanceledFromSprinting = CustomConfigFile.Bind<bool>("Circle Snap - Skill", "Is Circle Snapfreeze Canceled from Sprinting", true,
+                "Set whether or not casting Snapfreeze is cancelled from sprinting. Vanilla value: True.");
+
+            BaseMaxStock = CustomConfigFile.Bind<int>("Circle Snap - Skill", "Circle Snapfreeze Base Max Stock", 1,
+                "Set the base value for Snapfreeze's maximum stock. Vanilla value: 1.");
+
+            RechargeStock = CustomConfigFile.Bind<int>("Circle Snap - Skill", "Circle Snapfreeze Recharge Stock", 1,
+                "Set the value for how much stock Snapfreeze recharges per cooldown; useful for higher values of Base Max Stock. Vanilla value: 1.");
+
+            BaseRechargeInterval = CustomConfigFile.Bind<float>("Circle Snap - Skill", "Circle Snapfreeze Base Recharge Interval", 8,
+                "Set the base value for Snapfreeze's cooldown (recharge interval). Vanilla value: 12; ArtificerExtended value: 8.");
 
             UseClapfreezeAssets = CustomConfigFile.Bind<bool>("Clapfreeze", "Use Clapfreeze Assets", false,
                 "Enable cosmetic changes to make the Snapfreeze skill use the Clapfreeze assets from ArtificerExtended.");
@@ -187,6 +214,12 @@ namespace CircleSnapfreeze
                     snapfreeze.icon = iconBundle.LoadAsset<Sprite>(iconsPath + "clapfreeze.png");
                     LanguageAPI.Add("MAGE_UTILITY_ICE_NAME", $"Clapfreeze");
                 }
+
+                snapfreeze.isCombatSkill = IsCombatSkill.Value;
+                snapfreeze.canceledFromSprinting = CanceledFromSprinting.Value;
+                snapfreeze.baseMaxStock = BaseMaxStock.Value;
+                snapfreeze.rechargeStock = RechargeStock.Value;
+                snapfreeze.baseRechargeInterval = BaseRechargeInterval.Value;
             }
             else
             {
