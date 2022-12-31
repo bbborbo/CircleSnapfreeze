@@ -6,6 +6,7 @@ using EntityStates;
 using UnityEngine;
 using RoR2.Projectile;
 using EntityStates.Mage.Weapon;
+using RoR2.UI;
 
 namespace CircleSnapfreeze.States
 {
@@ -36,13 +37,13 @@ namespace CircleSnapfreeze.States
 		private GameObject cachedCrosshairPrefab;
 		private float duration;
 		private float stopwatch;
+		private CrosshairUtils.OverrideRequest crosshairOverrideRequest;
 
 		public override void OnEnter()
 		{
 			base.OnEnter();
 			this.duration = PrepWall.baseDuration / this.attackSpeedStat;
 			base.characterBody.SetAimTimer(this.duration + 2f);
-			this.cachedCrosshairPrefab = base.characterBody.crosshairPrefab;
 			base.PlayAnimation("Gesture, Additive", "PrepWall", "PrepWall.playbackRate", this.duration);
 			Util.PlaySound(PrepWall.prepWallSoundString, base.gameObject);
 			// The only thing that needed to be changed in this method is the area indicator so that it doesnt display as a rectangle.
@@ -57,6 +58,7 @@ namespace CircleSnapfreeze.States
 			// I had to multiply the size by a fraction because it didn't fit quite right.
 			this.areaIndicatorInstance.transform.localScale = Vector3.one * CircleSnapPlugin.CircleMaxRadius.Value * 1.0f;
 
+			bool wasGoodPlacement = this.goodPlacement;
 			this.goodPlacement = false;
 			this.areaIndicatorInstance.SetActive(true);
 			if (this.areaIndicatorInstance)
@@ -72,7 +74,16 @@ namespace CircleSnapfreeze.States
 					this.areaIndicatorInstance.transform.forward = -aimRay.direction;
 					this.goodPlacement = (Vector3.Angle(Vector3.up, raycastHit.normal) < PrepWall.maxSlopeAngle);
 				}
-				base.characterBody.crosshairPrefab = (this.goodPlacement ? PrepWall.goodCrosshairPrefab : PrepWall.badCrosshairPrefab);
+				if (wasGoodPlacement != this.goodPlacement || this.crosshairOverrideRequest == null)
+				{
+					CrosshairUtils.OverrideRequest overrideRequest = this.crosshairOverrideRequest;
+					if (overrideRequest != null)
+					{
+						overrideRequest.Dispose();
+					}
+					GameObject crosshairPrefab = this.goodPlacement ? PrepWall.goodCrosshairPrefab : PrepWall.badCrosshairPrefab;
+					crosshairOverrideRequest = CrosshairUtils.RequestOverrideForBody(base.characterBody, crosshairPrefab, CrosshairUtils.OverridePriority.Skill);
+				}
 			}
 			this.areaIndicatorInstance.SetActive(this.goodPlacement);
 		}
@@ -146,7 +157,10 @@ namespace CircleSnapfreeze.States
 				}
 			}
 			EntityState.Destroy(this.areaIndicatorInstance.gameObject);
-			base.characterBody.crosshairPrefab = this.cachedCrosshairPrefab;
+			if (crosshairOverrideRequest != null)
+			{
+				crosshairOverrideRequest.Dispose();
+			}
 			base.OnExit();
 		}
 

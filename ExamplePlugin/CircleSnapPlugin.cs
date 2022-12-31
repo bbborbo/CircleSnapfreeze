@@ -19,9 +19,9 @@ namespace CircleSnapfreeze
 	{
         //The Plugin GUID should be a unique ID for this plugin, which is human readable (as it is used in places like the config).
         public const string PluginGUID = PluginAuthor + "." + PluginName;
-        public const string PluginAuthor = "OrangePeel";
+        public const string PluginAuthor = "Borbo";
         public const string PluginName = "CircleSnapfreeze";
-        public const string PluginVersion = "1.0.0";
+        public const string PluginVersion = "1.1.0";
 
         #region assets
         // The AssetBundle here is something that's literally only needed for Clapfreeze assets (just the icon). I hate that I have to do it this way but oh well.
@@ -31,6 +31,7 @@ namespace CircleSnapfreeze
         #endregion
 
         #region config
+        // config sux
         internal static ConfigFile CustomConfigFile { get; set; }
         public static ConfigEntry<float> CircleMaxRadius { get; set; }
         public static ConfigEntry<float> CircleMaxDeployTime { get; set; }
@@ -49,10 +50,10 @@ namespace CircleSnapfreeze
             // Initializing config first so that we can retrieve config values for circle snap before we do anything else.
             InitializeConfig();
 
-            // We need to create our own version of the "walker" projectile first so that we can get it to behave how we want it to.
+            // Then we need to create our own version of the "walker" projectile so that we can get it to behave how we want it to.
             InitializeCustomWalker();
 
-            // Finally, we can replace the entity state for Snapfreeze
+            // Finally, we can replace the entity state for Snapfreeze.
             CircleTheSnapfreeze();
 
             // After everything is done, all that's left to do is initialize our Content Pack.
@@ -87,7 +88,7 @@ namespace CircleSnapfreeze
                 "This determines the rotation offset for Snapfreeze 'rays'. " +
                 "This wont have a significant effect on the performance of Snapfreeze unless youre using very few rays. " +
                 "Every 360 degrees loops back around to 0, you know the drill. " +
-                "-90 behaves the same as ArtificerExtended's long lost Clapfreeze skill.");
+                "-90 fires the first ray towards you - behaving the same as ArtificerExtended's long lost Clapfreeze skill.");
 
             UseClapfreezeAssets = CustomConfigFile.Bind<bool>("Clapfreeze", "Use Clapfreeze Assets", false,
                 "Enable cosmetic changes to make the Snapfreeze skill use the Clapfreeze assets from ArtificerExtended.");
