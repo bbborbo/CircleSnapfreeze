@@ -8,10 +8,14 @@ using RoR2.Projectile;
 using RoR2.Skills;
 using System;
 using UnityEngine;
+using RTAutoSprintEx;
+using System.Runtime.CompilerServices;
 
 namespace CircleSnapfreeze
 {
     [BepInDependency(R2API.R2API.PluginGUID)]
+    //Soft Dependencies are good for intercompatability, allowing our mod to load after AutoSprint if it's installed, but without requiring it to be installed for CircleSnapfreeze to run at all.
+    [BepInDependency("com.johnedwa.RTAutoSprintEx", BepInDependency.DependencyFlags.SoftDependency)]
     [BepInPlugin(PluginGUID, PluginName, PluginVersion)]
     [R2APISubmoduleDependency(nameof(LanguageAPI))]
 	
@@ -21,7 +25,10 @@ namespace CircleSnapfreeze
         public const string PluginGUID = PluginAuthor + "." + PluginName;
         public const string PluginAuthor = "Borbo";
         public const string PluginName = "CircleSnapfreeze";
-        public const string PluginVersion = "1.1.0";
+        public const string PluginVersion = "1.1.1";
+
+        //Making a bool to check if AutoSprint is loaded for easy access later
+        bool isAutosprintLoaded = Tools.isLoaded("com.johnedwa.RTAutoSprintEx");
 
         #region assets
         // The AssetBundle here is something that's literally only needed for Clapfreeze assets (just the icon). I hate that I have to do it this way but oh well.
@@ -56,10 +63,24 @@ namespace CircleSnapfreeze
             // Finally, we can replace the entity state for Snapfreeze.
             CircleTheSnapfreeze();
 
+            //Checking if AutoSprint is loaded before doing compatability operations
+            if (isAutosprintLoaded)
+            {
+                //Calling a separate method for intercompatability allows us to use extra logic to prevent our mod from breaking if the other mod isnt installed
+                DoAutosprintCompat();
+            }
+
             // After everything is done, all that's left to do is initialize our Content Pack.
             new ContentPacks().Initialize();
 
             Log.LogInfo(nameof(Awake) + " done.");
+        }
+
+        //This essentially stops this method from breaking our mod if it's unable to run the code inside due to intercompat
+        [MethodImpl(MethodImplOptions.NoInlining | MethodImplOptions.NoOptimization)]
+        private void DoAutosprintCompat()
+        {
+            SendMessage("RT_SprintDisableMessage", "CircleSnapfreeze.States.PrepCircleWall");
         }
 
         private void InitializeConfig()
