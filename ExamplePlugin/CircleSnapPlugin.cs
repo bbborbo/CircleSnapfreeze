@@ -13,7 +13,7 @@ using System.Runtime.CompilerServices;
 
 namespace CircleSnapfreeze
 {
-    [BepInDependency(R2API.R2API.PluginGUID)]
+    [BepInDependency(R2API.LanguageAPI.PluginGUID)]
     //Soft Dependencies are good for intercompatability, allowing our mod to load after AutoSprint if it's installed, but without requiring it to be installed for CircleSnapfreeze to run at all.
     [BepInDependency("com.johnedwa.RTAutoSprintEx", BepInDependency.DependencyFlags.SoftDependency)]
     [BepInPlugin(PluginGUID, PluginName, PluginVersion)]
@@ -25,7 +25,7 @@ namespace CircleSnapfreeze
         public const string PluginGUID = PluginAuthor + "." + PluginName;
         public const string PluginAuthor = "Borbo";
         public const string PluginName = "CircleSnapfreeze";
-        public const string PluginVersion = "1.1.1";
+        public const string PluginVersion = "1.1.2";
 
         //Making a bool to check if AutoSprint is loaded for easy access later
         bool isAutosprintLoaded = Tools.isLoaded("com.johnedwa.RTAutoSprintEx");
